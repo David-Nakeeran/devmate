@@ -2,6 +2,7 @@ import "dotenv/config";
 import { getUserInput } from "../cli/input.js";
 import { generateAIResponse } from "../ai/gemini.js";
 import { runTool } from "../tools/runner.js";
+import { logger } from "../ui/logger.js";
 
 const functionDeclarations = [
   {
@@ -51,6 +52,8 @@ export async function runAgent() {
     let iterations = 0;
     shouldStop = false;
 
+    let isFirstStep = true;
+
     history.push({
       role: "user",
       parts: [{ text: input }],
@@ -63,6 +66,12 @@ export async function runAgent() {
         shouldStop = true;
         break;
       }
+
+      if (isFirstStep) {
+        logger.think();
+        isFirstStep = false;
+      }
+
       try {
         const response = await generateAIResponse(
           history,
@@ -73,9 +82,9 @@ export async function runAgent() {
           iterations++;
           const functionCall = response.functionCalls[0];
 
-          console.log(`AI wants to use tool: ${functionCall.name}`);
+          logger.tool(functionCall.name);
 
-          const result = runTool(functionCall.name, functionCall.args);
+          const result = await runTool(functionCall.name, functionCall.args);
 
           const functionResponsePart = {
             name: functionCall.name,
@@ -85,8 +94,10 @@ export async function runAgent() {
             id: functionCall.id,
           };
 
+          // Model decides to call a tool (includes hidden thoughtSignature)
           history.push(response.candidates[0].content);
 
+          // Send tool result back to the model for further reasoning
           history.push({
             role: "user",
             parts: [
@@ -95,12 +106,13 @@ export async function runAgent() {
               },
             ],
           });
+
           continue;
         }
-        console.log(`AI: ${response.text}`);
+        logger.success(`DevMate > ${response.text}`);
         break;
       } catch (error) {
-        console.error("Error:", error.message);
+        logger.error(error.message);
         break;
       }
     }
