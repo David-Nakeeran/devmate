@@ -4,10 +4,7 @@ export const toolRegistry = {
   readFile: {
     run: functions.readFile,
   },
-  toUpperCase: {
-    run: functions.toUpperCase,
-  },
-  reverseText: {
-    run: functions.reverseText,
+  listFiles: {
+    run: functions.listFiles,
   },
 };

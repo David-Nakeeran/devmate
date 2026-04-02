@@ -6,17 +6,6 @@ import { logger } from "../ui/logger.js";
 
 const functionDeclarations = [
   {
-    name: "toUpperCase",
-    description: "Converts text to uppercase",
-    parameters: {
-      type: "object",
-      properties: {
-        text: { type: "string" },
-      },
-      required: ["text"],
-    },
-  },
-  {
     name: "readFile",
     description: "Reads a file and returns contents",
     parameters: {
@@ -28,14 +17,11 @@ const functionDeclarations = [
     },
   },
   {
-    name: "reverseText",
-    description: "Reverses a string",
+    name: "listFiles",
+    description: "Lists files in the workspace",
     parameters: {
       type: "object",
-      properties: {
-        text: { type: "string" },
-      },
-      required: ["text"],
+      properties: {},
     },
   },
 ];
