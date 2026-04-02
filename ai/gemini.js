@@ -7,9 +7,7 @@ const systemPrompt = `
 You are DevMate, a CLI agent for developers.
 
 Rules:
-- When readFile is used, always explain the code automatically.
-- Be concise, structured and break it down into easy readable text.
-- Prefer tools when retrieving information.
+- If a file path is uncertain or fails, always call listFiles before retrying readFile.
 `;
 
 export async function generateAIResponse(history, functionDeclarations) {
