@@ -31,38 +31,35 @@ export async function listFiles({ workspace }) {
   const filtered = fileNames.filter((item) => {
     return !item.name.startsWith(".");
   });
-  console.log(filtered);
+  // console.log(filtered);
 
-  const folderMap = {};
+  const referenceObject = {};
+  const fileDirectory = [];
 
-  const filesDirectory = filtered.reduce((acc, item) => {
-    if (item.isDirectory()) {
-      folderMap[`${item.parentPath}/${item.name}`] = {
-        name: item.name,
-        type: item.isDirectory() ? "directory" : "file",
-        children: [],
-        path: `${item.parentPath}/${item.name}`,
-      };
-      acc.push(folderMap[`${item.parentPath}/${item.name}`]);
+  filtered.forEach((item) => {
+    const fullPath = `${item.parentPath}/${item.name}`;
+
+    referenceObject[fullPath] = {
+      name: item.name,
+      type: item.isDirectory() ? "directory" : "file",
+      path: fullPath,
+      children: item.isDirectory() ? [] : null,
+    };
+  });
+
+  filtered.forEach((item) => {
+    const fullPath = `${item.parentPath}/${item.name}`;
+    const node = referenceObject[fullPath];
+
+    const parent = referenceObject[item.parentPath];
+
+    if (parent) {
+      parent.children.push(node);
     } else {
-      if (folderMap[item.parentPath]) {
-        folderMap[item.parentPath].children.push({
-          name: item.name,
-          type: item.isDirectory() ? "directory" : "file",
-          path: `${item.parentPath}/${item.name}`,
-        });
-      } else {
-        const tree = {
-          name: item.name,
-          type: item.isDirectory() ? "directory" : "file",
-          path: `${item.parentPath}/${item.name}`,
-        };
-        acc.push(tree);
-      }
+      fileDirectory.push(node);
     }
-    return acc;
-  }, []);
+  });
 
-  console.log(filesDirectory);
-  return filesDirectory;
+  console.log(fileDirectory);
+  return fileDirectory;
 }
