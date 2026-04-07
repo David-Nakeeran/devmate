@@ -1,5 +1,4 @@
 import fs from "node:fs/promises";
-import { type } from "node:os";
 import path from "node:path";
 
 export async function readFile({ path: filePath, workspace }) {
@@ -62,4 +61,45 @@ export async function listFiles({ workspace }) {
 
   console.log(fileDirectory);
   return fileDirectory;
+}
+
+export async function editFile(args) {
+  const { path: filePath, workspace, operation, target, content } = args;
+  let newContent;
+
+  if (content === null) {
+    throw new Error("No content provided");
+  }
+
+  if (target === null) {
+    throw new Error("No target provided");
+  }
+
+  try {
+    // TODO change into reusable function
+    const fullPath = path.resolve(workspace, filePath);
+    console.log(fullPath);
+
+    if (!fullPath.startsWith(workspace)) {
+      throw new Error("Path escapes workspace");
+    }
+
+    const data = await fs.readFile(fullPath, { encoding: "utf8" });
+
+    switch (operation) {
+      case "replace":
+        newContent = data.replace(target, content);
+        break;
+      case "delete":
+        newContent = data.replace(target, "");
+        break;
+      case "insert":
+        console.log("To do");
+        break;
+    }
+
+    await fs.writeFile(fullPath, newContent);
+  } catch (error) {
+    throw new Error(error.message);
+  }
 }
