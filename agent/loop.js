@@ -24,6 +24,21 @@ const functionDeclarations = [
       properties: {},
     },
   },
+  {
+    name: "editFile",
+    description:
+      "Edits a file by replacing, inserting or deleting content based on the target string in the workspace",
+    parameters: {
+      type: "object",
+      properties: {
+        path: { type: "string" },
+        operation: { type: "string", enum: ["replace", "insert", "delete"] },
+        target: { type: "string" },
+        content: { type: "string" },
+      },
+      required: ["path", "operation", "target", "content"],
+    },
+  },
 ];
 
 let history = [];
