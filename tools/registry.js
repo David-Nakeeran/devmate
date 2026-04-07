@@ -7,4 +7,7 @@ export const toolRegistry = {
   listFiles: {
     run: functions.listFiles,
   },
+  editFile: {
+    run: functions.editFile,
+  },
 };
