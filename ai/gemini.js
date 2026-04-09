@@ -20,11 +20,14 @@ Rules:
 - Use editFile when applying changes to a file.
 - Do not guess or hallucinate file paths.
 - Prefer working from known workspace structure over assumptions.
+- If a tool returns success: false, you MUST NOT claim the task was completed.
+- You should explain the error or try a different approach.
+- Only say a file was modified if a tool returned success: true.
 `;
 
 export async function generateAIResponse(history, functionDeclarations) {
   const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
+    model: "gemini-3.1-flash-lite-preview",
     contents: [
       {
         role: "user",
