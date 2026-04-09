@@ -87,6 +87,10 @@ export async function runAgent() {
 
           const result = await runTool(functionCall.name, functionCall.args);
 
+          if (!result.success) {
+            logger.error(result.error);
+          }
+
           const functionResponsePart = {
             name: functionCall.name,
             response: {
