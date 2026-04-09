@@ -13,67 +13,72 @@ export async function readFile({ path: filePath, workspace }) {
     const data = await fs.readFile(fullPath, { encoding: "utf8" });
 
     return {
-      path: fullPath,
-      content: data,
+      success: true,
+      data: {
+        path: fullPath,
+        content: data,
+      },
     };
   } catch (error) {
-    throw new Error(error.message);
+    return {
+      success: false,
+      error: error.message || "Failed to read file",
+    };
   }
 }
 
 export async function listFiles({ workspace }) {
-  const fileNames = await fs.readdir(workspace, {
-    withFileTypes: true,
-    recursive: true,
-  });
+  try {
+    const fileNames = await fs.readdir(workspace, {
+      withFileTypes: true,
+      recursive: true,
+    });
 
-  const filtered = fileNames.filter((item) => {
-    return !item.name.startsWith(".");
-  });
-  // console.log(filtered);
+    const filtered = fileNames.filter((item) => {
+      return !item.name.startsWith(".");
+    });
 
-  const referenceObject = {};
-  const fileDirectory = [];
+    const referenceObject = {};
+    const fileDirectory = [];
 
-  filtered.forEach((item) => {
-    const fullPath = `${item.parentPath}/${item.name}`;
+    filtered.forEach((item) => {
+      const fullPath = `${item.parentPath}/${item.name}`;
 
-    referenceObject[fullPath] = {
-      name: item.name,
-      type: item.isDirectory() ? "directory" : "file",
-      path: fullPath,
-      children: item.isDirectory() ? [] : null,
+      referenceObject[fullPath] = {
+        name: item.name,
+        type: item.isDirectory() ? "directory" : "file",
+        path: fullPath,
+        children: item.isDirectory() ? [] : null,
+      };
+    });
+
+    filtered.forEach((item) => {
+      const fullPath = `${item.parentPath}/${item.name}`;
+      const node = referenceObject[fullPath];
+
+      const parent = referenceObject[item.parentPath];
+
+      if (parent) {
+        parent.children.push(node);
+      } else {
+        fileDirectory.push(node);
+      }
+    });
+
+    return {
+      success: true,
+      data: fileDirectory,
     };
-  });
-
-  filtered.forEach((item) => {
-    const fullPath = `${item.parentPath}/${item.name}`;
-    const node = referenceObject[fullPath];
-
-    const parent = referenceObject[item.parentPath];
-
-    if (parent) {
-      parent.children.push(node);
-    } else {
-      fileDirectory.push(node);
-    }
-  });
-
-  console.log(fileDirectory);
-  return fileDirectory;
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message || "Failed to list files",
+    };
+  }
 }
 
 export async function editFile(args) {
   const { path: filePath, workspace, operation, target, content } = args;
-  let newContent;
-
-  if (content === null) {
-    throw new Error("No content provided");
-  }
-
-  if (target === null) {
-    throw new Error("No target provided");
-  }
 
   try {
     // TODO change into reusable function
@@ -86,20 +91,80 @@ export async function editFile(args) {
 
     const data = await fs.readFile(fullPath, { encoding: "utf8" });
 
+    if (!operation) {
+      return {
+        success: false,
+        error: "Operation is required",
+      };
+    }
+
+    if (!target) {
+      return {
+        success: false,
+        error: "Target is required",
+      };
+    }
+
+    if (operation === "replace" && !content) {
+      return {
+        success: false,
+        error: "Content required for replace",
+      };
+    }
+
+    let newContent;
     switch (operation) {
       case "replace":
+        if (!data.includes(target)) {
+          return {
+            success: false,
+            error: "Target not found in file",
+          };
+        }
         newContent = data.replace(target, content);
         break;
       case "delete":
+        if (!data.includes(target)) {
+          return {
+            success: false,
+            error: "Target not found in file",
+          };
+        }
         newContent = data.replace(target, "");
         break;
       case "insert":
-        console.log("To do");
+        const lines = data.split(/\r?\n/);
+        const index = lines.indexOf(target);
+        if (index === -1) {
+          return {
+            success: false,
+            error: "Target not found in file",
+          };
+        }
+        lines.splice(index + 1, 0, content);
+        newContent = [...lines].join("\r\n");
         break;
+      default:
+        return { success: false, error: "Invalid operation" };
+    }
+
+    if (newContent === undefined) {
+      return {
+        success: false,
+        error: "Edit failed to produce content",
+      };
     }
 
     await fs.writeFile(fullPath, newContent);
+
+    return {
+      success: true,
+      message: "File updated successfully",
+    };
   } catch (error) {
-    throw new Error(error.message);
+    return {
+      success: false,
+      error: error.message || "Unexpected error",
+    };
   }
 }
